@@ -90,7 +90,16 @@ void rtt_rosclock::use_manual_clock()
 const bool rtt_rosclock::set_sim_clock_activity(RTT::TaskContext *t)
 {
   if (!t) return false;
-  return t->setActivity(new SimClockActivity(t->getPeriod()));
+
+  int sched_policy = ORO_SCHED_OTHER;
+  int priority = 0;
+
+  if (t->getActivity() && t->getActivity()->thread()) {
+
+    sched_policy = t->getActivity()->thread()->getScheduler();
+    priority = t->getActivity()->thread()->getPriority();
+  }
+  return t->setActivity(new SimClockActivity(t->getPeriod(), sched_policy, priority));
 }
 
 const bool rtt_rosclock::enable_sim()

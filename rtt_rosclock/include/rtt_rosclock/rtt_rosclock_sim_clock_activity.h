@@ -64,6 +64,8 @@ namespace rtt_rosclock {
 
     SimClockActivity(
         RTT::Seconds period,
+        int policy = ORO_SCHED_OTHER,
+        int priority = 0,
         RTT::base::RunnableInterface* r = 0,
         const std::string& name ="SimClockActivity");
 
@@ -106,6 +108,12 @@ namespace rtt_rosclock {
 
     //! The desired minimum execution period
     RTT::Seconds period_;
+
+    //! The desired sched policy
+    int policy_;
+
+    //! The desired thread priority
+    int priority_;
 
     //! True after start() has succeeded
     bool running_;

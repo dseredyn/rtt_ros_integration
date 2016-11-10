@@ -41,6 +41,7 @@
 
 #include <rtt_rosclock/rtt_rosclock_sim_clock_activity.h>
 #include <rtt_rosclock/rtt_rosclock_sim_clock_activity_manager.h>
+#include <rtt_rosclock/rtt_rosclock_sim_clock_thread.h>
 
 #include <rtt/base/RunnableInterface.hpp>
 #include <rtt/os/TimeService.hpp>
@@ -56,6 +57,7 @@ SimClockActivity::SimClockActivity(RunnableInterface* run, const std::string& na
 : ActivityInterface(run)
   , name_(name)
   , period_(0.0)
+  , policy_(ORO_SCHED_OTHER)
   , running_(false)
   , active_(false)
   , manager_(SimClockActivityManager::Instance())
@@ -63,10 +65,12 @@ SimClockActivity::SimClockActivity(RunnableInterface* run, const std::string& na
   manager_->add(this);
 }
 
-SimClockActivity::SimClockActivity(RTT::Seconds period, RunnableInterface* run, const std::string& name)
+SimClockActivity::SimClockActivity(RTT::Seconds period, int policy, int priority, RunnableInterface* run, const std::string& name)
 : ActivityInterface(run)
   , name_(name)
   , period_(period)
+  , policy_(policy)
+  , priority_(priority)
   , running_(false)
   , active_(false)
   , manager_(SimClockActivityManager::Instance())
@@ -201,6 +205,14 @@ bool SimClockActivity::timeout()
 
 bool SimClockActivity::execute()
 {
+  struct sched_param param;
+  param.sched_priority = priority_;
+  int policy = SCHED_OTHER;
+  if (policy_ == ORO_SCHED_RT) {
+    policy = SCHED_FIFO;
+  }
+  pthread_setschedparam(pthread_self(), policy, &param);
+
   if (!running_) return false;
   if (runner) {
       runner->step();
